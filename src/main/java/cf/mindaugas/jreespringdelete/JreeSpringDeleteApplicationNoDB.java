@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -18,9 +17,9 @@ import java.util.List;
 
 @SpringBootApplication
 @Controller
-public class JreeSpringDeleteApplication {
+public class JreeSpringDeleteApplicationNoDB {
     public static void main(String[] args) {
-        var ret = SpringApplication.run(JreeSpringDeleteApplication.class, args);
+        var ret = SpringApplication.run(JreeSpringDeleteApplicationNoDB.class, args);
         // System.out.println(ret.getBean());
     }
 }
@@ -57,10 +56,48 @@ class ProductController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND)); // 404 NOT FOUND
     }
 
+    @PostMapping("") // CREATE product
+    public void createProduct(@RequestBody Product product){
+        product.setId(products.size() + 1);
+        products.add(product);
+    }
+
+    @PutMapping("/{id}") // UPDATE product
+    public ResponseEntity<Void> updateProduct(@PathVariable Integer id, @RequestBody Product product){
+        var optionalProduct = products.stream().filter(p -> p.getId().equals(id)).findFirst();
+
+        // if (optionalProduct.isPresent()) {
+        //     var currentProduct = optionalProduct.get();
+        //     currentProduct.setTitle(product.getTitle());
+        //     currentProduct.setCount(product.getCount());
+        //     currentProduct.setPrice(product.getPrice());
+        //     currentProduct.setRating(product.getRating());
+        //     return new ResponseEntity<>(HttpStatus.CREATED);
+        // } else {
+        //     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        // }
+
+        return optionalProduct
+                .map(currentProduct -> {
+                    currentProduct.setTitle(product.getTitle());
+                    currentProduct.setCount(product.getCount());
+                    currentProduct.setPrice(product.getPrice());
+                    currentProduct.setRating(product.getRating());
+                    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+                })
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
     @DeleteMapping("/{id}") // DELETE product
-    public void deleteProductById(@PathVariable Integer id){
-        var product = getProductById(id);
-        products.remove(product);
+    public ResponseEntity<Void> deleteProductById(@PathVariable Integer id){
+        var optionalProduct = products.stream().filter(p -> p.getId().equals(id)).findFirst();
+        return optionalProduct
+                .map(product -> {
+                    products.remove(product);
+                    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+                })
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+
     }
 }
 
